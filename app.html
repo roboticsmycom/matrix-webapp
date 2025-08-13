@@ -7,14 +7,13 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { margin: 0; background: #1a1a1a; color: white; font-family: Arial; display: flex; flex-direction: column; align-items: center; height: 100vh; padding: 10px; box-sizing: border-box; overflow: hidden; }
-        #balance { font-size: 20px; position: absolute; top: 10vh; left: 50%; transform: translateX(-50%); text-align: center; white-space: nowrap; } /* Баланс в одной строке */
-        #title { font-size: 24px; margin-bottom: 10px; text-align: center; } /* Заголовок над кнопками */
-        #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 80%; justify-items: center; } /* Блок кнопок, 2 ряда */
-        button { background: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 16px; width: 100%; text-align: center; line-height: 1.2; }
-        #exit-btn { background: #f44336; position: absolute; bottom: 10vh; left: 50%; transform: translateX(-50%); width: 200px; }
-        #move-btn { background: #2196F3; margin-bottom: 10px; }
-        #svg-container { width: 90vw; height: 300px; margin-bottom: 10px; }
-        #history { list-style: none; padding: 0; font-size: 14px; }
+        #balance { font-size: 20px; position: fixed; top: 10vh; left: 50%; transform: translateX(-50%); }
+        #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; position: absolute; top: 50%; transform: translateY(-50%); width: 80%; justify-items: center; }
+        button { background: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 16px; width: 100%; }
+        #exit-btn { background: #f44336; position: fixed; bottom: 10vh; left: 50%; transform: translateX(-50%); width: 200px; }
+        #move-btn { background: #2196F3; position: fixed; top: 20vh; left: 50%; transform: translateX(-50%); width: 200px; } /* Фиксированная позиция, не смещается */
+        #svg-container { width: 90vw; height: 300px; position: fixed; top: 30vh; left: 50%; transform: translateX(-50%); overflow: hidden; } /* Фиксированное место для поля */
+        #history { list-style: none; padding: 0; font-size: 14px; position: fixed; bottom: 20vh; left: 50%; transform: translateX(-50%); width: 80%; text-align: center; }
         #history li { margin-bottom: 5px; }
         .cell { fill: lightgray; border-radius: 2px; }
         .text { font-size: 2px; text-anchor: middle; dominant-baseline: central; fill: black; }
@@ -23,22 +22,18 @@
         .current-win { fill: gold; animation: glow 1s ease-in-out infinite alternate; }
         @keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
         @keyframes glow { 0% { fill: gold; } 100% { fill: yellow; } }
-        #main-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; position: relative; } /* Центрирование блока с заголовком и кнопками */
-        #main-content { display: flex; flex-direction: column; align-items: center; }
-        #room-screen { display: none; text-align: center; flex-direction: column; justify-content: center; height: 100vh; }
+        #main-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; position: relative; }
+        #room-screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; position: relative; }
     </style>
 </head>
 <body>
     <div id="main-screen">
-        <div id="balance">Ваш баланс: 1000 ⭐</div>
-        <div id="main-content">
-            <div id="title">Выбери уровень</div>
-            <div id="rooms">
-                <button onclick="selectRoom(1)">1 ⭐</button>
-                <button onclick="selectRoom(10)">10 ⭐</button>
-                <button onclick="selectRoom(100)">100 ⭐</button>
-                <button onclick="selectRoom(1000)">1000 ⭐</button>
-            </div>
+        <div id="balance">Баланс: 1000 ⭐</div>
+        <div id="rooms">
+            <button onclick="selectRoom(1)">1 ⭐</button>
+            <button onclick="selectRoom(10)">10 ⭐</button>
+            <button onclick="selectRoom(100)">100 ⭐</button>
+            <button onclick="selectRoom(1000)">1000 ⭐</button>
         </div>
         <button id="exit-btn" onclick="exitApp()">Выход</button>
     </div>
@@ -47,7 +42,7 @@
         <button id="move-btn" onclick="makeMove()">Сделать ход</button>
         <div id="svg-container"></div>
         <ul id="history"></ul>
-        <button onclick="leaveRoom()" style="background: #f44336; margin-top: 10px;">Выход</button>
+        <button onclick="leaveRoom()" style="background: #f44336; position: fixed; bottom: 10vh; left: 50%; transform: translateX(-50%); width: 200px;">Выход</button> /* Изменено на "Выход", фиксировано внизу */
     </div>
 
     <script>
@@ -105,7 +100,7 @@
 
         function updateBalance() {
             const balances = document.querySelectorAll('#balance');
-            balances.forEach(b => b.textContent = `Баланс: ${balance} ⭐`);  /* Одна строка */
+            balances.forEach(b => b.textContent = `Баланс: ${balance} ⭐`);
         }
 
         function updateHistory() {
@@ -153,5 +148,3 @@
     </script>
 </body>
 </html>
-
-
