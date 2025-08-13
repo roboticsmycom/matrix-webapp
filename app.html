@@ -5,7 +5,7 @@
     <title>Игра на Звёзды</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { margin: 0; background: #1a1a1a; color: white; font-family: Arial; display: flex; flex-direction: column; align-items: center; padding: 10px; }
+        body { margin: 0; background: #1a1a1a; color: white; font-family: Arial; display: flex; flex-direction: column; align-items: center; height: 100vh; justify-content: center; padding: 10px; }
         #balance { font-size: 20px; margin-bottom: 10px; }
         #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
         button { background: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 16px; }
@@ -20,33 +20,44 @@
         .current-win { fill: gold; animation: glow 1s ease-in-out infinite alternate; }
         @keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
         @keyframes glow { 0% { fill: gold; } 100% { fill: yellow; } }
+        #room-screen { display: none; text-align: center; }
     </style>
 </head>
 <body>
-    <div id="balance">Баланс: 1000 ⭐</div>
-    <div id="rooms">
-        <button onclick="selectRoom(1)">Room 1 ⭐</button>
-        <button onclick="selectRoom(10)">Room 10 ⭐</button>
-        <button onclick="selectRoom(100)">Room 100 ⭐</button>
-        <button onclick="selectRoom(1000)">Room 1000 ⭐</button>
+    <div id="main-screen">
+        <div id="balance">Баланс: 1000 ⭐</div>
+        <div id="rooms">
+            <button onclick="selectRoom(1)">Room 1 ⭐</button>
+            <button onclick="selectRoom(10)">Room 10 ⭐</button>
+            <button onclick="selectRoom(100)">Room 100 ⭐</button>
+            <button onclick="selectRoom(1000)">Room 1000 ⭐</button>
+        </div>
     </div>
-    <button id="move-btn" onclick="makeMove()" style="display: none;">Сделать ход</button>
-    <div id="svg-container"></div>
-    <ul id="history"></ul>
-    <button onclick="backToMenu()" style="background: #f44336; margin-top: 10px;">Назад в меню</button>
+    <div id="room-screen">
+        <div id="balance">Баланс: 1000 ⭐</div>
+        <button id="move-btn" onclick="makeMove()">Сделать ход</button>
+        <div id="svg-container"></div>
+        <ul id="history"></ul>
+        <button onclick="leaveRoom()" style="background: #f44336; margin-top: 10px;">Покинуть комнату</button>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();  // Полноэкранный режим
 
         let currentBet = null;
-        let balance = 1000;  // Тестовый, заменить на реальный из бота
+        let balance = 1000;  // Тестовый
         let history = [];
+        let currentRow = 1;
+        let currentCol = 1;
+        let isWin = false;
 
         function selectRoom(bet) {
             currentBet = bet;
-            document.getElementById('move-btn').style.display = 'block';
-            tg.sendData(JSON.stringify({action: 'select_room', bet: bet}));  // Отправка в бот
+            document.getElementById('main-screen').style.display = 'none';
+            document.getElementById('room-screen').style.display = 'block';
+            tg.sendData(JSON.stringify({action: 'select_room', bet: bet}));
+            renderField(currentRow, currentCol, isWin);
             updateBalance();
         }
 
@@ -55,31 +66,39 @@
                 alert('Недостаточно ⭐!');
                 return;
             }
-            tg.sendData(JSON.stringify({action: 'make_move', bet: currentBet}));  // Отправка хода в бот
-            // Симуляция ответа (в реале бот отправит данные обратно, здесь для теста)
-            const row = Math.floor(Math.random() * 10) + 1;
-            const col = Math.floor(Math.random() * 10) + 1;
-            const isWin = row === col;
-            const win = isWin ? currentBet * row : 0;
+            tg.sendData(JSON.stringify({action: 'make_move', bet: currentBet}));
+            // Симуляция (в реале бот вернёт, здесь для теста: последовательный ход)
+            currentCol += 1;
+            if (currentCol > 10) {
+                currentCol = 1;
+                currentRow += 1;
+            }
+            if (currentRow > 10) currentRow = 1;
+            isWin = currentRow === currentCol;
+            const win = isWin ? currentBet * currentRow : 0;
             balance += win - currentBet;
-            history.push(`Позиция: ${row}/${col}, Выигрыш: ${win} ⭐`);
+            history.push(`Позиция: ${currentRow}/${currentCol}, Выигрыш: ${win} ⭐`);
             updateBalance();
             updateHistory();
-            renderField(row, col, isWin);
+            renderField(currentRow, currentCol, isWin);
         }
 
-        function backToMenu() {
-            tg.close();  // Закрыть Web App
+        function leaveRoom() {
+            currentBet = null;
+            document.getElementById('room-screen').style.display = 'none';
+            document.getElementById('main-screen').style.display = 'flex';
+            tg.sendData(JSON.stringify({action: 'leave_room'}));
         }
 
         function updateBalance() {
-            document.getElementById('balance').innerText = `Баланс: ${balance} ⭐`;
+            const balances = document.querySelectorAll('#balance');
+            balances.forEach(b => b.innerText = `Баланс: ${balance} ⭐`);
         }
 
         function updateHistory() {
             const ul = document.getElementById('history');
             ul.innerHTML = '';
-            history.slice(-5).forEach(item => {  // Последние 5 ходов
+            history.slice(-5).forEach(item => {
                 const li = document.createElement('li');
                 li.textContent = item;
                 ul.appendChild(li);
