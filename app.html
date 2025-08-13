@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Игра на Звёзды</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { margin: 0; background: #1a1a1a; color: white; font-family: Arial; display: flex; flex-direction: column; align-items: center; padding: 10px; }
+        #balance { font-size: 20px; margin-bottom: 20px; }
+        #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        button { background: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; }
+        #move-btn { background: #2196F3; }
+        #svg-container { width: 100%; height: 300px; margin-bottom: 20px; }
+        #history { list-style: none; padding: 0; }
+        #history li { margin-bottom: 5px; }
+        .cell { stroke: black; stroke-width: 1; fill: white; }
+        .text { font-size: 4px; text-anchor: middle; dominant-baseline: central; fill: black; }
+        .win { fill: green; }
+        .current-loss { fill: red; animation: pulse 1s ease-in-out; }
+        .current-win { fill: gold; animation: glow 1s ease-in-out infinite alternate; }
+        @keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes glow { 0% { fill: gold; } 100% { fill: yellow; } }
+    </style>
+</head>
+<body>
+    <div id="balance">Баланс: 1000 ⭐</div>
+    <div id="rooms">
+        <button onclick="selectRoom(1)">Room 1 ⭐</button>
+        <button onclick="selectRoom(10)">Room 10 ⭐</button>
+        <button onclick="selectRoom(100)">Room 100 ⭐</button>
+        <button onclick="selectRoom(1000)">Room 1000 ⭐</button>
+    </div>
+    <button id="move-btn" onclick="makeMove()" style="display: none;">Сделать ход</button>
+    <div id="svg-container"></div>
+    <ul id="history"></ul>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();  // Полноэкранный режим
+
+        let currentBet = null;
+        let balance = 1000;  // Тестовый
+        let history = [];
+
+        function selectRoom(bet) {
+            currentBet = bet;
+            document.getElementById('move-btn').style.display = 'block';
+            tg.sendData(JSON.stringify({action: 'select_room', bet: bet}));  // Отправка боту, если нужно
+            updateBalance();
+        }
+
+        function makeMove() {
+            if (balance < currentBet) {
+                alert('Недостаточно ⭐!');
+                return;
+            }
+            // Отправка хода боту
+            tg.sendData(JSON.stringify({action: 'make_move', bet: currentBet}));
+            // Симуляция (в реале бот вернёт)
+            // Для примера
+            const row = Math.floor(Math.random() * 10) + 1;
+            const col = Math.floor(Math.random() * 10) + 1;
+            const isWin = row === col;
+            const win = isWin ? currentBet * row : 0;
+            balance += win - currentBet;
+            history.push(`Позиция: ${row}/${col}, Выигрыш: ${win} ⭐`);
+            updateBalance();
+            updateHistory();
+            renderField(row, col, isWin);
+        }
+
+        function updateBalance() {
+            document.getElementById('balance').innerText = `Баланс: ${balance} ⭐`;
+        }
+
+        function updateHistory() {
+            const ul = document.getElementById('history');
+            ul.innerHTML = '';
+            history.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                ul.appendChild(li);
+            });
+        }
+
+        function renderField(currentRow, currentCol, isWin) {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("viewBox", "0 0 100 100");
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < 10; j++) {
+                    let x = j * 10;
+                    let y = i * 10;
+                    let className = 'cell';
+                    if (i === j) className += ' win';
+                    if (i === currentRow - 1 && j === currentCol - 1) className += isWin ? ' current-win' : ' current-loss';
+
+                    const rect = document.createElementNS(svgNS, "rect");
+                    rect.setAttribute("x", x);
+                    rect.setAttribute("y", y);
+                    rect.setAttribute("width", 10);
+                    rect.setAttribute("height", 10);
+                    rect.setAttribute("class", className);
+                    svg.appendChild(rect);
+
+                    const text = document.createElementNS(svgNS, "text");
+                    text.setAttribute("x", x + 5);
+                    text.setAttribute("y", y + 5);
+                    text.setAttribute("class", "text");
+                    text.textContent = `${i+1}/${j+1}`;
+                    svg.appendChild(text);
+                }
+            }
+            const container = document.getElementById('svg-container');
+            container.innerHTML = '';
+            container.appendChild(svg);
+        }
+    </script>
+</body>
+</html>
