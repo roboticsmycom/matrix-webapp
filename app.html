@@ -6,15 +6,15 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { margin: 0; background: #1a1a1a; color: white; font-family: Arial; display: flex; flex-direction: column; align-items: center; padding: 10px; }
-        #balance { font-size: 20px; margin-bottom: 20px; }
-        #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
-        button { background: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; }
-        #move-btn { background: #2196F3; }
-        #svg-container { width: 100%; height: 300px; margin-bottom: 20px; }
-        #history { list-style: none; padding: 0; }
+        #balance { font-size: 20px; margin-bottom: 10px; }
+        #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
+        button { background: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 16px; }
+        #move-btn { background: #2196F3; margin-bottom: 10px; }
+        #svg-container { width: 90vw; height: 300px; margin-bottom: 10px; }
+        #history { list-style: none; padding: 0; font-size: 14px; }
         #history li { margin-bottom: 5px; }
-        .cell { stroke: black; stroke-width: 1; fill: white; }
-        .text { font-size: 4px; text-anchor: middle; dominant-baseline: central; fill: black; }
+        .cell { fill: lightgray; border-radius: 2px; } /* Светло-серый, сглаженные углы, без границ */
+        .text { font-size: 2px; text-anchor: middle; dominant-baseline: central; fill: black; }
         .win { fill: green; }
         .current-loss { fill: red; animation: pulse 1s ease-in-out; }
         .current-win { fill: gold; animation: glow 1s ease-in-out infinite alternate; }
@@ -33,19 +33,20 @@
     <button id="move-btn" onclick="makeMove()" style="display: none;">Сделать ход</button>
     <div id="svg-container"></div>
     <ul id="history"></ul>
+    <button onclick="backToMenu()" style="background: #f44336; margin-top: 10px;">Назад в меню</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();  // Полноэкранный режим
 
         let currentBet = null;
-        let balance = 1000;  // Тестовый
+        let balance = 1000;  // Тестовый, заменить на реальный из бота
         let history = [];
 
         function selectRoom(bet) {
             currentBet = bet;
             document.getElementById('move-btn').style.display = 'block';
-            tg.sendData(JSON.stringify({action: 'select_room', bet: bet}));  // Отправка боту, если нужно
+            tg.sendData(JSON.stringify({action: 'select_room', bet: bet}));  // Отправка в бот
             updateBalance();
         }
 
@@ -54,10 +55,8 @@
                 alert('Недостаточно ⭐!');
                 return;
             }
-            // Отправка хода боту
-            tg.sendData(JSON.stringify({action: 'make_move', bet: currentBet}));
-            // Симуляция (в реале бот вернёт)
-            // Для примера
+            tg.sendData(JSON.stringify({action: 'make_move', bet: currentBet}));  // Отправка хода в бот
+            // Симуляция ответа (в реале бот отправит данные обратно, здесь для теста)
             const row = Math.floor(Math.random() * 10) + 1;
             const col = Math.floor(Math.random() * 10) + 1;
             const isWin = row === col;
@@ -69,6 +68,10 @@
             renderField(row, col, isWin);
         }
 
+        function backToMenu() {
+            tg.close();  // Закрыть Web App
+        }
+
         function updateBalance() {
             document.getElementById('balance').innerText = `Баланс: ${balance} ⭐`;
         }
@@ -76,7 +79,7 @@
         function updateHistory() {
             const ul = document.getElementById('history');
             ul.innerHTML = '';
-            history.forEach(item => {
+            history.slice(-5).forEach(item => {  // Последние 5 ходов
                 const li = document.createElement('li');
                 li.textContent = item;
                 ul.appendChild(li);
