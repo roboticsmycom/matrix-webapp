@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Игра на Звёзды</title>
+    <title>10/10</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { margin: 0; background: #1a1a1a; color: white; font-family: Arial; display: flex; flex-direction: column; align-items: center; height: 100vh; padding: 10px; box-sizing: border-box; overflow: hidden; }
@@ -11,9 +11,9 @@
         #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; position: absolute; top: 50%; transform: translateY(-50%); width: 80%; justify-items: center; }
         button { background: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 16px; width: 100%; text-align: center; line-height: 1.2; }
         #exit-btn { background: #f44336; position: absolute; bottom: 10vh; left: 50%; transform: translateX(-50%); width: 200px; }
-        #move-btn { background: #2196F3; margin-bottom: 10px; }
-        #svg-container { width: 90vw; height: 300px; margin-bottom: 10px; }
-        #history { list-style: none; padding: 0; font-size: 14px; }
+        #move-btn { background: #2196F3; position: absolute; top: 60vh; left: 50%; transform: translateX(-50%); width: 200px; } /* Синяя кнопка "Сделать ход" */
+        #svg-container { width: 90vw; height: 300px; position: absolute; top: 30vh; left: 50%; transform: translateX(-50%); overflow: hidden; }
+        #history { list-style: none; padding: 0; font-size: 14px; position: absolute; top: 20vh; left: 50%; transform: translateX(-50%); width: 80%; text-align: center; }
         #history li { margin-bottom: 5px; }
         .cell { fill: lightgray; border-radius: 2px; }
         .text { font-size: 2px; text-anchor: middle; dominant-baseline: central; fill: black; }
@@ -23,29 +23,30 @@
         @keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
         @keyframes glow { 0% { fill: gold; } 100% { fill: yellow; } }
         #main-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; position: relative; }
-        #main-content { display: flex; flex-direction: column; align-items: center; }
-        #room-screen { display: none; text-align: center; flex-direction: column; justify-content: center; height: 100vh; }
+        #room-screen { display: none; flex-direction: column; align-items: center; height: 100vh; position: relative; }
+        #position { font-size: 18px; position: absolute; top: 5vh; left: 10px; } /* Позиция "10/10" вверху слева */
+        #bot-name { position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 12px; color: gray; } /* @my1010robot внизу */
     </style>
 </head>
 <body>
     <div id="main-screen">
         <div id="balance">Баланс: 1000 ⭐</div>
-        <div id="main-content">
-            <div id="rooms">
-                <button onclick="selectRoom(1)">1<br>⭐</button>
-                <button onclick="selectRoom(10)">10<br>⭐</button>
-                <button onclick="selectRoom(100)">100<br>⭐</button>
-                <button onclick="selectRoom(1000)">1000<br>⭐</button>
-            </div>
+        <div id="rooms">
+            <button onclick="selectRoom(1)">1<br>⭐</button>
+            <button onclick="selectRoom(10)">10<br>⭐</button>
+            <button onclick="selectRoom(100)">100<br>⭐</button>
+            <button onclick="selectRoom(1000)">1000<br>⭐</button>
         </div>
         <button id="exit-btn" onclick="exitApp()">Выход</button>
     </div>
     <div id="room-screen">
+        <div id="position">1/1</div>
         <div id="balance">Баланс: 1000 ⭐</div>
-        <button id="move-btn" onclick="makeMove()">Сделать ход</button>
-        <div id="svg-container"></div>
         <ul id="history"></ul>
-        <button onclick="leaveRoom()" style="background: #f44336; margin-top: 10px;">Покинуть комнату</button>
+        <div id="svg-container"></div>
+        <button id="move-btn" onclick="makeMove()">Сделать ход</button>
+        <button onclick="leaveRoom()" style="background: #f44336; position: absolute; bottom: 10vh; left: 50%; transform: translateX(-50%); width: 200px;">Назад</button>
+        <div id="bot-name">@my1010robot</div>
     </div>
 
     <script>
@@ -64,6 +65,7 @@
             document.getElementById('main-screen').style.display = 'none';
             document.getElementById('room-screen').style.display = 'flex';
             tg.sendData(JSON.stringify({action: 'select_room', bet: bet}));
+            updatePosition();
             renderField(currentRow, currentCol, isWin);
             updateBalance();
         }
@@ -84,10 +86,10 @@
             isWin = currentRow === currentCol;
             const win = isWin ? currentBet * currentRow : 0;
             balance += win - currentBet;
-            let message = isWin ? `+ ${win}⭐` : `- ${currentBet} ⭐`;  // Изменённое сообщение
-            history.push(message);
+            history.push(isWin ? `+ ${win} ⭐` : `- ${currentBet} ⭐`);
             updateBalance();
             updateHistory();
+            updatePosition();
             renderField(currentRow, currentCol, isWin);
         }
 
@@ -104,17 +106,21 @@
 
         function updateBalance() {
             const balances = document.querySelectorAll('#balance');
-            balances.forEach(b => b.textContent = `Баланс: ${balance} ⭐`);  /* Одна строка */
+            balances.forEach(b => b.textContent = `Баланс: ${balance} ⭐`);
         }
 
         function updateHistory() {
             const ul = document.getElementById('history');
             ul.innerHTML = '';
-            history.slice(-3).forEach(item => {  // Только 3 последних хода
+            history.slice(-3).forEach(item => {
                 const li = document.createElement('li');
                 li.textContent = item;
                 ul.appendChild(li);
             });
+        }
+
+        function updatePosition() {
+            document.getElementById('position').textContent = `${currentRow}/${currentCol}`;
         }
 
         function renderField(currentRow, currentCol, isWin) {
@@ -144,6 +150,24 @@
                     text.textContent = `${i+1}/${j+1}`;
                     svg.appendChild(text);
                 }
+            }
+            // Добавляем метки рядов слева
+            for (let i = 0; i < 10; i++) {
+                const text = document.createElementNS(svgNS, "text");
+                text.setAttribute("x", -5);
+                text.setAttribute("y", i * 10 + 5);
+                text.setAttribute("class", "text");
+                text.textContent = i + 1;
+                svg.appendChild(text);
+            }
+            // Добавляем метки колонок сверху
+            for (let j = 0; j < 10; j++) {
+                const text = document.createElementNS(svgNS, "text");
+                text.setAttribute("x", j * 10 + 5);
+                text.setAttribute("y", -5);
+                text.setAttribute("class", "text");
+                text.textContent = j + 1;
+                svg.appendChild(text);
             }
             const container = document.getElementById('svg-container');
             container.innerHTML = '';
