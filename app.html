@@ -5,22 +5,23 @@
     <title>Игра на Звёзды</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { margin: 0; background: #1a1a1a; color: white; font-family: Arial; display: flex; flex-direction: column; align-items: center; height: 100vh; justify-content: center; padding: 10px; }
-        #balance { font-size: 20px; margin-bottom: 10px; }
-        #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
+        body { margin: 0; background: #1a1a1a; color: white; font-family: Arial; display: flex; flex-direction: column; align-items: center; height: 100vh; padding: 10px; box-sizing: border-box; }
+        #balance { font-size: 20px; position: fixed; top: 10px; left: 50%; transform: translateX(-50%); }
+        #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 50px; margin-bottom: auto; }
         button { background: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 16px; }
+        #exit-btn { background: #f44336; position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); width: 200px; }
         #move-btn { background: #2196F3; margin-bottom: 10px; }
         #svg-container { width: 90vw; height: 300px; margin-bottom: 10px; }
         #history { list-style: none; padding: 0; font-size: 14px; }
         #history li { margin-bottom: 5px; }
-        .cell { fill: lightgray; border-radius: 2px; } /* Светло-серый, сглаженные углы, без границ */
+        .cell { fill: lightgray; border-radius: 2px; }
         .text { font-size: 2px; text-anchor: middle; dominant-baseline: central; fill: black; }
         .win { fill: green; }
         .current-loss { fill: red; animation: pulse 1s ease-in-out; }
         .current-win { fill: gold; animation: glow 1s ease-in-out infinite alternate; }
         @keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
         @keyframes glow { 0% { fill: gold; } 100% { fill: yellow; } }
-        #room-screen { display: none; text-align: center; }
+        #room-screen { display: none; text-align: center; flex-direction: column; justify-content: center; height: 100%; }
     </style>
 </head>
 <body>
@@ -32,6 +33,7 @@
             <button onclick="selectRoom(100)">Room 100 ⭐</button>
             <button onclick="selectRoom(1000)">Room 1000 ⭐</button>
         </div>
+        <button id="exit-btn" onclick="exitApp()">Выход</button>
     </div>
     <div id="room-screen">
         <div id="balance">Баланс: 1000 ⭐</div>
@@ -43,10 +45,10 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();  // Полноэкранный режим
+        tg.expand();
 
         let currentBet = null;
-        let balance = 1000;  // Тестовый
+        let balance = 1000;
         let history = [];
         let currentRow = 1;
         let currentCol = 1;
@@ -55,7 +57,7 @@
         function selectRoom(bet) {
             currentBet = bet;
             document.getElementById('main-screen').style.display = 'none';
-            document.getElementById('room-screen').style.display = 'block';
+            document.getElementById('room-screen').style.display = 'flex';
             tg.sendData(JSON.stringify({action: 'select_room', bet: bet}));
             renderField(currentRow, currentCol, isWin);
             updateBalance();
@@ -67,7 +69,7 @@
                 return;
             }
             tg.sendData(JSON.stringify({action: 'make_move', bet: currentBet}));
-            // Симуляция (в реале бот вернёт, здесь для теста: последовательный ход)
+            // Симуляция последовательного хода
             currentCol += 1;
             if (currentCol > 10) {
                 currentCol = 1;
@@ -88,6 +90,10 @@
             document.getElementById('room-screen').style.display = 'none';
             document.getElementById('main-screen').style.display = 'flex';
             tg.sendData(JSON.stringify({action: 'leave_room'}));
+        }
+
+        function exitApp() {
+            tg.close();
         }
 
         function updateBalance() {
