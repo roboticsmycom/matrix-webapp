@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Игра на Звёзды</title>
+    <title>Игра 10/10</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { margin: 0; background: #1a1a1a; color: white; font-family: Arial; display: flex; flex-direction: column; align-items: center; height: 100vh; padding: 10px; box-sizing: border-box; overflow: hidden; }
-        #balance { font-size: 20px; position: absolute; top: 10vh; left: 50%; transform: translateX(-50%); text-align: center; white-space: nowrap; } /* Баланс в одной строке */
+        #balance { font-size: 20px; position: fixed; top: 10vh; left: 50%; transform: translateX(-50%); text-align: center; white-space: nowrap; } /* Баланс в одной строке */
         #title { font-size: 24px; margin-bottom: 10px; text-align: center; } /* Заголовок над кнопками */
-        #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; position: absolute; top: 50%; transform: translateY(-50%); width: 70vw; justify-items: center; } /* 35% ширины на кнопку, 2 ряда */
+        #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; position: absolute; top: 50%; transform: translateY(-50%); width: 70vw; justify-items: center; } /* 35% ширины на кнопку (70vw / 2 = 35vw), 2 ряда, центрировано */
         button { background: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 16px; width: 100%; text-align: center; line-height: 1.2; }
         #exit-btn { background: #f44336; position: absolute; bottom: 10vh; left: 50%; transform: translateX(-50%); width: 200px; }
-        #move-btn { background: #2196F3; position: absolute; top: 60vh; left: 50%; transform: translateX(-50%); width: 200px; } /* Под полем, fixed */
-        #svg-container { width: 90vw; height: 300px; position: absolute; top: 30vh; left: 50%; transform: translateX(-50%); overflow: hidden; } /* Fixed для поля */
-        #history { list-style: none; padding: 0; font-size: 14px; position: absolute; top: 20vh; left: 50%; transform: translateX(-50%); width: 80%; text-align: center; } /* Между балансом и полем, fixed */
+        #move-btn { background: #2196F3; position: absolute; top: 60vh; left: 50%; transform: translateX(-50%); width: 200px; } /* Под полем */
+        #svg-container { width: 90vw; height: 300px; position: absolute; top: 30vh; left: 50%; transform: translateX(-50%); overflow: hidden; } /* Фиксированное место для поля */
+        #history { list-style: none; padding: 0; font-size: 14px; position: absolute; top: 20vh; left: 50%; transform: translateX(-50%); width: 80%; text-align: center; } /* Между балансом и полем */
         #history li { margin-bottom: 5px; }
         .cell { fill: lightgray; border-radius: 2px; }
         .text { font-size: 2px; text-anchor: middle; dominant-baseline: central; fill: black; }
@@ -25,7 +25,7 @@
         @keyframes glow { 0% { fill: gold; } 100% { fill: yellow; } }
         #main-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; position: relative; } /* Центрирование блока с заголовком и кнопками */
         #main-content { display: flex; flex-direction: column; align-items: center; }
-        #room-screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; position: relative; } /* Fixed позиции для элементов комнаты */
+        #room-screen { display: none; flex-direction: column; align-items: center; height: 100vh; position: relative; } /* Fixed позиций для комнаты, ничего не смещается */
     </style>
 </head>
 <body>
@@ -44,10 +44,10 @@
     </div>
     <div id="room-screen">
         <div id="balance">Баланс: 1000 ⭐</div>
-        <ul id="history"></ul> /* Лента наверху */
+        <ul id="history"></ul> /* Лента между балансом и полем */
         <div id="svg-container"></div> /* Поле */
-        <button id="move-btn" onclick="makeMove()">Сделать ход</button> /* Кнопка под полем */
-        <button onclick="leaveRoom()" style="background: #f44336; position: absolute; bottom: 10vh; left: 50%; transform: translateX(-50%); width: 200px;">Назад</button> /* Изменено на "Назад", fixed внизу */
+        <button id="move-btn" onclick="makeMove()">Сделать ход</button> /* Под полем */
+        <button onclick="leaveRoom()" style="background: #f44336; position: absolute; bottom: 10vh; left: 50%; transform: translateX(-50%); width: 200px;">Выход</button> /* Изменено на "Выход" */
     </div>
 
     <script>
@@ -105,7 +105,7 @@
 
         function updateBalance() {
             const balances = document.querySelectorAll('#balance');
-            balances.forEach(b => b.textContent = `Баланс: ${balance} ⭐`);
+            balances.forEach(b => b.textContent = `Баланс: ${balance} ⭐`);  /* Одна строка */
         }
 
         function updateHistory() {
