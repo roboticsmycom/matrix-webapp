@@ -11,12 +11,11 @@
         #rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; position: absolute; top: 50%; transform: translateY(-50%); width: 80%; justify-items: center; }
         button { background: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 16px; width: 100%; text-align: center; line-height: 1.2; }
         #exit-btn { background: #f44336; position: absolute; bottom: 10vh; left: 50%; transform: translateX(-50%); width: 200px; }
-        #svg-container { width: 90vw; height: 300px; position: absolute; top: 10vh; left: 50%; transform: translateX(-50%); overflow: hidden; } /* Поле наверху */
-        #result-row { display: flex; justify-content: space-between; position: absolute; top: 50vh; left: 50%; transform: translateX(-50%); width: 80%; text-align: center; } /* Строка под полем: баланс слева, результат справа */
-        #room-balance { font-size: 20px; }
-        #last-result { font-size: 20px; }
-        #move-btn { background: #2196F3; position: absolute; top: 60vh; left: 50%; transform: translateX(-50%); width: 200px; } /* Ниже строки */
-        #leave-btn { background: #f44336; position: absolute; top: 70vh; left: 50%; transform: translateX(-50%); width: 200px; }
+        #move-btn { background: #2196F3; margin-bottom: 10px; }
+        #svg-container { width: 90vw; height: 50vh; margin-bottom: 10px; padding-top: 10px; } /* Поле в верхней половине, отступ от верха = padding-left/right (10px) */
+        #result { font-size: 18px; margin-bottom: 10px; text-align: center; } /* Результат на отдельной строчке */
+        #history { list-style: none; padding: 0; font-size: 14px; }
+        #history li { margin-bottom: 5px; }
         .cell { fill: lightgray; border-radius: 2px; }
         .text { font-size: 2px; text-anchor: middle; dominant-baseline: central; fill: black; }
         .win { fill: green; }
@@ -25,7 +24,9 @@
         @keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
         @keyframes glow { 0% { fill: gold; } 100% { fill: yellow; } }
         #main-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; position: relative; }
-        #room-screen { display: none; flex-direction: column; align-items: center; height: 100vh; position: relative; }
+        #main-content { display: flex; flex-direction: column; align-items: center; }
+        #room-screen { display: none; text-align: center; flex-direction: column; height: 100vh; position: relative; } /* Верхняя половина для поля, нижняя для элементов */
+        #lower-half { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh; }
     </style>
 </head>
 <body>
@@ -40,13 +41,13 @@
         <button id="exit-btn" onclick="exitApp()">Выход</button>
     </div>
     <div id="room-screen">
-        <div id="svg-container"></div>
-        <div id="result-row">
-            <div id="room-balance">Баланс: 1000 ⭐</div>
-            <div id="last-result"></div>
+        <div id="svg-container"></div> /* Поле в верхней половине, начинается у верха с отступом padding */
+        <div id="lower-half">
+            <div id="balance">Баланс: 1000 ⭐</div> /* 1) Баланс на отдельной строчке */
+            <div id="result"></div> /* 2) Результат +n⭐ или -n⭐ на отдельной строчке */
+            <button id="move-btn" onclick="makeMove()">Сделать ход</button> /* 3) Кнопка "Сделать ход" на отдельной строчке */
+            <button onclick="leaveRoom()" style="background: #f44336; margin-top: 10px;">Назад</button> /* 4) Кнопка "Назад" на отдельной строчке */
         </div>
-        <button id="move-btn" onclick="makeMove()">Сделать ход</button>
-        <button id="leave-btn" onclick="leaveRoom()">Выход</button>
     </div>
 
     <script>
@@ -55,8 +56,7 @@
 
         let currentBet = null;
         let balance = 1000;  // Тестовый
-        let lastResult = '';  // Для последнего результата
-
+        let history = [];
         let currentRow = 1;
         let currentCol = 1;
         let isWin = false;
@@ -86,9 +86,11 @@
             isWin = currentRow === currentCol;
             const win = isWin ? currentBet * currentRow : 0;
             balance += win - currentBet;
-            lastResult = isWin ? `+ ${win}⭐` : `- ${currentBet} ⭐`;
+            let message = isWin ? `+ ${win}⭐` : `- ${currentBet} ⭐`;  // Изменённое сообщение
+            history.push(message);
             updateBalance();
-            updateLastResult();
+            updateResult(message);
+            updateHistory();
             renderField(currentRow, currentCol, isWin);
         }
 
@@ -104,11 +106,22 @@
         }
 
         function updateBalance() {
-            document.getElementById('room-balance').textContent = `Баланс: ${balance} ⭐`;
+            const balances = document.querySelectorAll('#balance');
+            balances.forEach(b => b.textContent = `Баланс: ${balance} ⭐`);
         }
 
-        function updateLastResult() {
-            document.getElementById('last-result').textContent = lastResult;
+        function updateResult(lastMessage) {
+            document.getElementById('result').textContent = lastMessage;
+        }
+
+        function updateHistory() {
+            const ul = document.getElementById('history');
+            ul.innerHTML = '';
+            history.slice(-3).forEach(item => {  // Только 3 последних
+                const li = document.createElement('li');
+                li.textContent = item;
+                ul.appendChild(li);
+            });
         }
 
         function renderField(currentRow, currentCol, isWin) {
