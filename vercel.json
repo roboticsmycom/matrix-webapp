@@ -1,7 +1,14 @@
 {
-  "buildCommand": "",
-  "outputDirectory": ".",
+  "builds": [
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    }
+  ],
   "redirects": [
-    { "source": "/", "destination": "/matrix.html" }
+    {
+      "source": "/",
+      "destination": "/matrix.html"
+    }
   ]
 }
